@@ -2,7 +2,6 @@ package ro.danisi.app.ws.security;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -13,20 +12,22 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import ro.danisi.app.ws.io.repositories.UserRepository;
 import ro.danisi.app.ws.services.UserService;
 
-@Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurity {
     
 	private final UserService userDetailsService;
 	private final BCryptPasswordEncoder bCryptPasswordEncoder;
+	private final UserRepository userRepository;
 
 	public WebSecurity(@Qualifier("userService") UserService userDetailsService,
-			BCryptPasswordEncoder bCryptPasswordEncoder) {
+			BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository) {
 		this.userDetailsService = userDetailsService;
 		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+		this.userRepository = userRepository;
 	}
 
 	@Bean
@@ -45,8 +46,8 @@ public class WebSecurity {
 			.antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL)
 			.permitAll()
 			.anyRequest().authenticated().and()
-//			.addFilter(new AuthenticationFilter(authenticationManager))
 			.addFilter(getAuthenticationFilter(authenticationManager))
+			.addFilter(new AuthorizationFilter(authenticationManager))
 			.authenticationManager(authenticationManager)
 			.sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
