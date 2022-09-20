@@ -1,12 +1,12 @@
 package ro.danisi.app.ws.exceptions;
 
-public class UserServiceException extends RuntimeException{
+//import java.io.Serial;
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1381366897577798670L;
-	
+public class UserServiceException extends RuntimeException {
+
+//	@Serial
+	private static final long serialVersionUID = 1348771109171435607L;
+
 	public UserServiceException(String message) {
 		super(message);
 	}

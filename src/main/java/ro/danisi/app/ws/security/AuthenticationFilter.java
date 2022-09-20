@@ -21,7 +21,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -32,6 +31,7 @@ import ro.danisi.app.ws.ui.model.request.UserLoginRequestModel;
 
 public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	private final AuthenticationManager authenticationManager;
+	private String contentType;
 
 	public AuthenticationFilter(AuthenticationManager authenticationManager) {
 		this.authenticationManager = authenticationManager;
@@ -41,6 +41,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse res)
 			throws AuthenticationException {
 		try {
+			contentType = req.getHeader("Accept");
 
 			UserLoginRequestModel creds = new ObjectMapper().readValue(req.getInputStream(),
 					UserLoginRequestModel.class);
@@ -58,17 +59,16 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 			Authentication auth) throws IOException, ServletException {
 
 		String userName = ((User) auth.getPrincipal()).getUsername();
-		String secret = Base64.getEncoder().encodeToString(SecurityConstants.SECRET_KEY.getBytes());
+		String secret = Base64.getEncoder().encodeToString(SecurityConstants.getTokenSecret().getBytes());
 		SecretKey signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 
 		String token = Jwts.builder().setSubject(userName)
 				.setExpiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
-				.signWith(signingKey, SignatureAlgorithm.HS256)
-				.compact();
-		
+				.signWith(signingKey, SignatureAlgorithm.HS256).compact();
+
 		UserService userService = (UserService) SpringApplicationContext.getBean("userService");
 		UserDto userDto = userService.getUser(userName);
-		
+
 		res.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + token);
 		res.addHeader("UserId", userDto.getUserId());
 

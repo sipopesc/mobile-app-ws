@@ -18,16 +18,16 @@ import ro.danisi.app.ws.services.UserService;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurity {
-    
+
 	private final UserService userDetailsService;
 	private final BCryptPasswordEncoder bCryptPasswordEncoder;
-	private final UserRepository userRepository;
+//	private final UserRepository userRepository;
 
 	public WebSecurity(@Qualifier("userService") UserService userDetailsService,
 			BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository) {
 		this.userDetailsService = userDetailsService;
 		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-		this.userRepository = userRepository;
+//		this.userRepository = userRepository;
 	}
 
 	@Bean
@@ -36,28 +36,25 @@ public class WebSecurity {
 		// Configure AuthenticationManagerBuilder
 		AuthenticationManagerBuilder authenticationManagerBuilder = http
 				.getSharedObject(AuthenticationManagerBuilder.class);
+
 		
 		authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
-		
+
 		AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 
-		http
-			.cors().and().csrf().disable().authorizeRequests()
-			.antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL)
-			.permitAll()
-			.anyRequest().authenticated().and()
-			.addFilter(getAuthenticationFilter(authenticationManager))
-			.addFilter(new AuthorizationFilter(authenticationManager))
-			.authenticationManager(authenticationManager)
-			.sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+		http.cors().and().csrf().disable().authorizeRequests()
+				.antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL).permitAll().anyRequest().authenticated()
+				.and().addFilter(getAuthenticationFilter(authenticationManager))
+				.addFilter(new AuthorizationFilter(authenticationManager)).authenticationManager(authenticationManager)
+				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
 		http.headers().frameOptions().disable();
 
 		return http.build();
 	}
-	
-	protected AuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager) throws Exception{
+
+	protected AuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager)
+			throws Exception {
 		final AuthenticationFilter filter = new AuthenticationFilter(authenticationManager);
 		filter.setFilterProcessesUrl("/users/login");
 		return filter;
